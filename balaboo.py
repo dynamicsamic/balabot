@@ -1,6 +1,9 @@
 import asyncio
 import json
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from aiohttp import ClientSession
 
@@ -42,18 +45,18 @@ def get_style(style: str = "текст"):
     return styles.get(style, 0)
 
 
-def constr_req_body(query: str, style: str) -> dict[str, Any]:
+def build_req_body(query: str, style: str) -> dict[str, Any]:
     return {"query": query, "intro": get_style(style), "filter": 1}
 
 
-async def fetch(url: str, query: str, style: str):
-    async with ClientSession() as session:
-        req_body = constr_req_body(query, style)
-        async with session.post(url, json=req_body, headers=headers) as resp:
-            res = await resp.json()
-            return res.get("text")
-            # b = await resp.text()
-            # print(json.loads(b.read().decode("utf8")))
+async def fetch(session: ClientSession, url: str, query: str, style: str):
+    req_body = build_req_body(query, style)
+    async with session.post(url, json=req_body, headers=headers) as resp:
+        res = await resp.json()
+        logger.info(res)
+        return res.get("text")
+        # b = await resp.text()
+        # print(json.loads(b.read().decode("utf8")))
 
 
 if __name__ == "__main__":

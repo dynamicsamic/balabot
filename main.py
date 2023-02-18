@@ -1,18 +1,21 @@
 import logging
 
-from aiogram import Bot, Dispatcher, executor
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.dispatcher import filters
 from aiogram.types import (
+    BotCommand,
     InlineQuery,
     InlineQueryResultArticle,
     InputTextMessageContent,
     Message,
+    MessageEntity,
 )
-from aiogram.types.message import Message
+from aiohttp import ClientSession
 
 import settings
 from balaboo import fetch
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 bot = Bot(settings.BOT_TOKEN)
 dp = Dispatcher(bot)
@@ -43,12 +46,13 @@ def extract_args(query_string: str = "") -> dict[str, str]:
 #    await bot.answer_inline_query(query.id, results=[msg], cache_time=1)
 
 
-@dp.message_handler()
-async def foo(message: Message):
-    print(message.entities)
-    print(message.entities)
-    await message.answer("hi")
+@dp.message_handler(commands=["balabot"])
+async def cmd_one(message: types.Message, command: filters.Command.CommandObj):
+    url = settings.BALABOO["api_url"]
+    async with ClientSession() as session:
+        text = await fetch(session, url, **extract_args(message.get_args()))
+    await message.reply(text)
 
 
 if __name__ == "__main__":
-    executor.start_polling(dispatcher=dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True)
